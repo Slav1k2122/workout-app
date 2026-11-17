@@ -5,7 +5,8 @@
 
 ## Стек
 - **Vite** + **чистий JS** (ES-модулі, без фреймворку). DOM будуємо хелпером `h()` з `src/lib/dom.js`.
-- **vite-plugin-pwa** (Workbox) генерує service worker і manifest. `registerType: 'autoUpdate'`. У dev SW вимкнений.
+- **vite-plugin-pwa** (Workbox) генерує service worker і manifest. `registerType: 'prompt'` — нова версія
+  показує плашку «Оновити» (`main.js`), а не перезавантажує сторінку посеред введення. У dev SW вимкнений.
 - **idb**: обгортка над IndexedDB (з етапу 1).
 - **Chart.js**: графіки (з етапу 3), імпортувати лише потрібні модулі (tree-shaking).
 - Іконки PWA генеруються з `public/icon.svg` командою `npm run icons` (`pwa-assets.config.js`).
@@ -74,7 +75,7 @@ src/
 - [x] 4. Інформація про вправу: SVG-силует (спереду/ззаду), техніка, помилки
 - [x] 5. Калорії: калькулятор норми, щоденник, історія + графік
 - [x] 6. Вага тіла: записи, графік (тиждень/місяць/усе), зміна від початку
-- [ ] 7. Експорт/імпорт JSON, storage.persist, шліфування
+- [x] 7. Експорт/імпорт JSON, storage.persist, шліфування
 - [ ] 8. (опц.) Таймер відпочинку між підходами
 
 ## Корисні компоненти та нотатки
@@ -96,6 +97,10 @@ src/
   `barChart(...)` у `lib/charts.js` — стовпчики по днях + пунктирна лінія норми.
 - `db/weight.js` — `saveWeight` (один запис на день, ключ = дата) також оновлює `profile.weight`,
   якщо це найсвіжіший запис — норма калорій підлаштовується під актуальну вагу.
+- `lib/backup.js` — експорт (`exportData`, `deliverFile`: Web Share → «Зберегти у Файли», інакше download),
+  `parseBackup` (перевірка app/schemaVersion/записів), `importData(backup, "merge" | "replace")`,
+  `getBackupStatus` (крапка на вкладці «Ще», якщо копії не було > 7 днів), `wipeAllData`.
+  Нове сховище чи поле → додати в `STORES`/валідатори бекапу.
 - `refresh({ keepScroll: true })` — перемалювати екран без скидання прокрутки (після збереження в нижній панелі).
 - `components/body-map.js` — `bodyMap({ primary, secondary })` → силует спереду/ззаду, метод `.update()`.
   Координати — ліва половина фігури (x<100), права — дзеркальна копія. Кожен id з `MUSCLES` має

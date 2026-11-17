@@ -647,3 +647,35 @@ select.input {
 .quick-add-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
 .quick-add-row .btn { min-height: 52px; }
 .big-input { min-height: 52px; font-size: 22px; font-weight: 700; }
+
+/* ---------- Резервна копія / оновлення ---------- */
+.backup-card.warn { border: 1px solid rgb(251 191 36 / 0.45); }
+.backup-warn {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgb(251 191 36 / 0.1);
+  color: var(--text);
+  font-size: 14px;
+}
+.backup-warn::before { content: '⚠︎ '; color: var(--warning); font-weight: 700; }
+.backup-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.update-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 10px 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.4);
+  animation: toast-in 0.25s ease-out;
+}
+.update-banner .btn { min-height: 40px; padding: 0 16px; }
+.backup-actions .btn { padding: 0 10px; white-space: nowrap; }

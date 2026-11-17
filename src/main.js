@@ -8,6 +8,7 @@ import { route, fallback, startRouter, navigate } from './router.js'
 import { createTabbar } from './components/tabbar.js'
 import { requestPersistence } from './db/db.js'
 import { destroyCharts } from './lib/charts.js'
+import { getBackupStatus } from './lib/backup.js'
 
 import { workoutView } from './views/workout/index.js'
 import { exercisesView } from './views/exercises/index.js'
@@ -22,7 +23,41 @@ import { weightView } from './views/weight/index.js'
 import { moreView } from './views/more/index.js'
 
 // ---------- Service worker (лише у production-збірці, у dev вимкнено) ----------
-registerSW({ immediate: true })
+const updateSW = registerSW({
+  immediate: true,
+  onNeedRefresh() {
+    showUpdateBanner(() => updateSW(true))
+  },
+  onRegisteredSW(_url, registration) {
+    // iOS рідко сам перевіряє оновлення — перевіряємо, коли застосунок повертається на екран
+    if (!registration) return
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') registration.update().catch(() => {})
+    })
+  },
+})
+
+function showUpdateBanner(onUpdate) {
+  if (document.querySelector('.update-banner')) return
+  const banner = h(
+    'div',
+    { class: 'update-banner', role: 'status' },
+    h('span', null, 'Доступна нова версія'),
+    h(
+      'button',
+      {
+        type: 'button',
+        class: 'btn btn-primary',
+        onclick: () => {
+          banner.querySelector('button').textContent = 'Оновлюю…'
+          onUpdate()
+        },
+      },
+      'Оновити',
+    ),
+  )
+  document.body.append(banner)
+}
 requestPersistence()
 
 // ---------- Каркас ----------
@@ -60,4 +95,5 @@ startRouter((node, { path, isBack, keepScroll }) => {
   tabbar.setActive(path)
   window.scrollTo(0, keepScroll ? prevY : isBack ? (scrollPositions.get(path) ?? 0) : 0)
   getActiveWorkout().then((active) => tabbar.setDot('/workout', !!active))
+  getBackupStatus().then((s) => tabbar.setDot('/more', s.needsBackup))
 })
