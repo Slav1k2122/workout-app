@@ -638,3 +638,12 @@ select.input {
 .result-macros div { background: var(--surface-2); border-radius: var(--radius-sm); padding: 8px 4px; display: flex; flex-direction: column; }
 .result-macros b { font-size: 17px; font-variant-numeric: tabular-nums; }
 .result-macros span { font-size: 12px; color: var(--text-dim); }
+
+/* ---------- Вага тіла ---------- */
+.quick-add { display: flex; flex-direction: column; gap: 10px; }
+.quick-add-label { display: flex; flex-direction: column; }
+.quick-add-label b { font-size: 17px; }
+.quick-add-label span { font-size: 13px; color: var(--text-dim); }
+.quick-add-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+.quick-add-row .btn { min-height: 52px; }
+.big-input { min-height: 52px; font-size: 22px; font-weight: 700; }
