@@ -6,23 +6,27 @@
  *
  * - атрибути `on*` з функцією стають слухачами подій
  * - `class` / `className` — клас, `html` — innerHTML (лише для довірених рядків, напр. іконок)
+ * - `value` встановлюється як властивість після додавання дітей (працює для select і textarea)
  * - діти: рядки, числа, вузли, масиви; null/undefined/false ігноруються
  */
 export function h(tag, props, ...children) {
   const el = document.createElement(tag)
+  let value
   if (props) {
-    for (const [key, value] of Object.entries(props)) {
-      if (value == null || value === false) continue
-      if (key === 'class' || key === 'className') el.className = value
-      else if (key === 'html') el.innerHTML = value
-      else if (key === 'dataset') Object.assign(el.dataset, value)
-      else if (key === 'style' && typeof value === 'object') Object.assign(el.style, value)
-      else if (key.startsWith('on') && typeof value === 'function') el.addEventListener(key.slice(2).toLowerCase(), value)
-      else if (key in el && typeof value !== 'string') el[key] = value
-      else el.setAttribute(key, value === true ? '' : value)
+    for (const [key, val] of Object.entries(props)) {
+      if (val == null || val === false) continue
+      if (key === 'value') value = val
+      else if (key === 'class' || key === 'className') el.className = val
+      else if (key === 'html') el.innerHTML = val
+      else if (key === 'dataset') Object.assign(el.dataset, val)
+      else if (key === 'style' && typeof val === 'object') Object.assign(el.style, val)
+      else if (key.startsWith('on') && typeof val === 'function') el.addEventListener(key.slice(2).toLowerCase(), val)
+      else if (key in el && typeof val !== 'string') el[key] = val
+      else el.setAttribute(key, val === true ? '' : val)
     }
   }
   append(el, children)
+  if (value != null) el.value = value
   return el
 }
 
