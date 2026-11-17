@@ -31,6 +31,8 @@ export function createExerciseBrowser({ exercises, state, renderRow }) {
     value: state.query,
     oninput: (e) => {
       state.query = e.target.value
+      // Пошук завжди по всій базі — інакше легко «не знайти» вправу через активний фільтр
+      if (state.query.trim()) state.group = 'all'
       render()
     },
   })

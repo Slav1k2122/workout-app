@@ -12,6 +12,9 @@ import { workoutView } from './views/workout/index.js'
 import { exercisesView } from './views/exercises/index.js'
 import { exerciseDetailView } from './views/exercises/detail.js'
 import { exerciseFormView } from './views/exercises/form.js'
+import { workoutDetailView } from './views/workout/detail.js'
+import { workoutEditView } from './views/workout/edit.js'
+import { getActiveWorkout } from './db/workouts.js'
 import { nutritionView } from './views/nutrition/index.js'
 import { weightView } from './views/weight/index.js'
 import { moreView } from './views/more/index.js'
@@ -27,6 +30,8 @@ document.getElementById('app').append(view, tabbar)
 
 // ---------- Маршрути (порядок важливий: конкретні шляхи перед :id) ----------
 route('/workout', workoutView)
+route('/workout/:id/edit', workoutEditView)
+route('/workout/:id', workoutDetailView)
 route('/exercises', exercisesView)
 route('/exercises/new', () => exerciseFormView())
 route('/exercises/:id/edit', exerciseFormView)
@@ -49,4 +54,5 @@ startRouter((node, { path, isBack }) => {
   view.replaceChildren(node)
   tabbar.setActive(path)
   window.scrollTo(0, isBack ? (scrollPositions.get(path) ?? 0) : 0)
+  getActiveWorkout().then((active) => tabbar.setDot('/workout', !!active))
 })

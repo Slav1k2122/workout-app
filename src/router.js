@@ -44,10 +44,17 @@ export function goBack(fallbackPath) {
   else navigate(fallbackPath, { replace: true })
 }
 
+let onChange = () => {}
+
+/** Перемальовує поточний екран (напр. після зміни даних без зміни шляху). */
+export function refresh() {
+  onChange()
+}
+
 /** Запускає роутер. render(node, { path, isBack }) викликається на кожну зміну маршруту. */
 export function startRouter(render) {
   let seq = 0
-  const onChange = async () => {
+  onChange = async () => {
     const path = currentPath()
     const isBack = stack.length > 1 && stack[stack.length - 2] === path
     if (isBack) stack.pop()

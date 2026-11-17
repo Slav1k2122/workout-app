@@ -2,8 +2,10 @@ import { h } from '../../lib/dom.js'
 import { page, iconButton, emptyState } from '../../components/page.js'
 import { icons } from '../../components/icons.js'
 import { toast } from '../../components/toast.js'
-import { navigate } from '../../router.js'
+import { goBack } from '../../router.js'
 import { getExercise, deleteCustomExercise } from '../../db/exercises.js'
+import { countWorkoutsWithExercise } from '../../db/workouts.js'
+import { plural } from '../../lib/format.js'
 import { GROUP_NAMES, MUSCLES, EQUIPMENT } from '../../data/muscles.js'
 
 const back = { label: 'Вправи', href: '/exercises' }
@@ -25,10 +27,15 @@ export async function exerciseDetailView({ id }) {
     : []
 
   async function remove() {
-    if (!confirm(`Видалити вправу «${ex.name}»?`)) return
+    const used = await countWorkoutsWithExercise(ex.id)
+    const msg = used
+      ? `Вправа є в ${used} ${plural(used, ['тренуванні', 'тренуваннях', 'тренуваннях'])}. ` +
+        'Записи в історії залишаться, але вправа зникне з бібліотеки й статистики. Видалити?'
+      : `Видалити вправу «${ex.name}»?`
+    if (!confirm(msg)) return
     await deleteCustomExercise(ex.id)
     toast('Вправу видалено')
-    navigate('/exercises', { replace: true })
+    goBack('/exercises')
   }
 
   return page(

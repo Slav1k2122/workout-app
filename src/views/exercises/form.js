@@ -2,7 +2,7 @@ import { h } from '../../lib/dom.js'
 import { page, emptyState } from '../../components/page.js'
 import { icons } from '../../components/icons.js'
 import { toast } from '../../components/toast.js'
-import { navigate } from '../../router.js'
+import { navigate, goBack } from '../../router.js'
 import { getExercise, listExercises, saveCustomExercise } from '../../db/exercises.js'
 import { GROUPS, MUSCLES, EQUIPMENT } from '../../data/muscles.js'
 import { normalize } from '../../components/exercise-browser.js'
@@ -119,8 +119,13 @@ export async function exerciseFormView({ id } = {}) {
       steps: lines(stepsInput.value),
       mistakes: lines(mistakesInput.value),
     })
-    toast(editing ? 'Зміни збережено' : 'Вправу додано')
-    navigate('/exercises/' + encodeURIComponent(saved.id), { replace: true })
+    if (editing) {
+      toast('Зміни збережено')
+      goBack('/exercises/' + encodeURIComponent(saved.id)) // повертаємось на картку (вона перечитає дані)
+    } else {
+      toast('Вправу додано')
+      navigate('/exercises/' + encodeURIComponent(saved.id), { replace: true })
+    }
   }
 
   const form = h(

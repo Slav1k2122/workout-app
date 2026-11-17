@@ -285,3 +285,194 @@ select.input {
   background-position: right 10px center;
   background-size: 18px;
 }
+
+/* ---------- Додаткові кнопки ---------- */
+.btn-lg { min-height: 56px; font-size: 18px; border-radius: var(--radius); }
+.btn-ghost { background: transparent; color: var(--accent); }
+.btn-ghost:active { background: var(--surface-2); }
+.btn svg { width: 20px; height: 20px; }
+.btn-finish { background: var(--surface-2); color: var(--accent); border: 1px solid rgb(52 211 153 / 0.4); }
+.block-title { margin: 28px 4px 12px; font-size: 22px; font-weight: 700; }
+.faint { color: var(--text-faint) !important; }
+.pre-wrap { white-space: pre-wrap; }
+
+/* ---------- Крапка на вкладці ---------- */
+.tabbar a { position: relative; }
+.tabbar a.has-dot::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: calc(50% + 10px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+/* ---------- Активне тренування ---------- */
+.workout-meta { display: flex; align-items: center; gap: 6px; font-size: 15px; }
+.workout-meta svg { width: 18px; height: 18px; color: var(--accent); }
+.timer { font-variant-numeric: tabular-nums; font-weight: 600; color: var(--accent); }
+
+.editor { display: flex; flex-direction: column; gap: 12px; }
+.editor .card + .card { margin-top: 0; }
+.exercise-card { padding: 12px 12px 6px; }
+.exercise-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-left: 4px; }
+.exercise-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+.exercise-card .icon-btn { background: transparent; color: var(--text-dim); flex: none; }
+
+.last-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  margin: 8px 0 6px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: rgb(52 211 153 / 0.08);
+  text-align: left;
+}
+.last-result:disabled { background: var(--surface-2); }
+.last-result:not(:disabled):active { background: rgb(52 211 153 / 0.16); }
+.last-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+.last-sets { font-size: 16px; font-weight: 600; color: var(--accent); }
+.last-hint { font-size: 12px; color: var(--text-faint); }
+
+.sets { display: flex; flex-direction: column; gap: 6px; }
+.set-row {
+  display: grid;
+  grid-template-columns: 28px 1fr 14px 1fr 40px;
+  align-items: center;
+  gap: 6px;
+}
+.set-head { font-size: 12px; color: var(--text-faint); text-align: center; text-transform: uppercase; letter-spacing: 0.04em; }
+.set-num { text-align: center; color: var(--text-dim); font-weight: 600; font-variant-numeric: tabular-nums; }
+.set-x { text-align: center; color: var(--text-faint); }
+.set-input {
+  width: 100%;
+  height: 46px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  text-align: center;
+  font-size: 19px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.set-input::placeholder { color: var(--text-faint); font-weight: 500; }
+.set-input:focus { border-color: var(--accent); }
+.set-del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+}
+.set-del svg { width: 18px; height: 18px; }
+.set-del:active { color: var(--danger); }
+.add-set { margin-top: 4px; }
+.add-exercise { margin-top: 4px; }
+
+/* ---------- Деталі тренування ---------- */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.stat { background: var(--surface); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; }
+.stat-value { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat-label { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+.set-list { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.set-line { display: flex; gap: 12px; font-size: 17px; font-variant-numeric: tabular-nums; }
+.set-line .set-num { width: 20px; }
+
+/* ---------- Bottom sheet ---------- */
+.no-scroll, .no-scroll body { overflow: hidden; }
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-end;
+  background: rgb(0 0 0 / 0.55);
+  animation: fade-in 0.2s ease-out;
+}
+.sheet {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 85dvh;
+  padding-bottom: var(--safe-bottom);
+  border-radius: 16px 16px 0 0;
+  background: var(--surface);
+  animation: slide-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sheet.full { height: calc(100dvh - var(--safe-top) - 10px); max-height: none; }
+.sheet-overlay.closing { animation: fade-out 0.2s ease-in forwards; }
+.sheet-overlay.closing .sheet { animation: slide-down 0.2s ease-in forwards; }
+.sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sheet-header h2 { font-size: 18px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet-close { flex: none; min-height: 40px; border: 0; background: none; color: var(--accent); font-size: 17px; font-weight: 600; }
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 16px 16px;
+}
+.sheet-controls {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+  background: var(--surface);
+}
+.sheet .list { background: var(--surface-2); }
+.sheet .search { background: var(--bg); }
+.sheet .list-row { border-bottom-color: var(--border); }
+.picker-row {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+}
+.picker-row > svg { color: var(--accent) !important; }
+.picker-row:active { background: var(--border); }
+.picker-row:disabled { opacity: 0.45; }
+.action-list { display: flex; flex-direction: column; gap: 8px; padding-top: 16px; }
+.action-item {
+  min-height: 52px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-size: 17px;
+}
+.action-item.danger { color: var(--danger); }
+.action-item:disabled { opacity: 0.4; }
+.action-item:active { background: var(--border); }
+
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }
+@keyframes slide-up { from { transform: translateY(100%); } }
+@keyframes slide-down { to { transform: translateY(100%); } }

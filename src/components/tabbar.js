@@ -20,5 +20,10 @@ export function createTabbar() {
     const section = '/' + (path.split('/')[1] || '')
     for (const a of links) a.classList.toggle('active', a.dataset.path === section)
   }
+
+  /** Крапка-індикатор на вкладці (напр. є активне тренування). */
+  nav.setDot = (path, on) => {
+    links.find((a) => a.dataset.path === path)?.classList.toggle('has-dot', on)
+  }
   return nav
 }

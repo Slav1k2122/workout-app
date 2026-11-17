@@ -37,7 +37,7 @@ export async function saveCustomExercise(data) {
   return record
 }
 
-// TODO (етап 2): перед видаленням перевіряти, чи вправа є в історії тренувань
+// Тренування зберігають знімок назви, тож історія не ламається після видалення вправи
 export async function deleteCustomExercise(id) {
   if (isBuiltin(id)) return
   await (await getDB()).delete('exercises', id)
