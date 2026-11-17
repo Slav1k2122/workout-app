@@ -95,6 +95,23 @@ export async function workoutsWithExercise(exerciseId) {
   return list.sort((a, b) => b.startedAt - a.startedAt)
 }
 
+/**
+ * Зведення по виконаних вправах: Map(exerciseId → { lastTs, date, sets, count }),
+ * де date/sets — з останнього тренування.
+ */
+export async function exerciseHistoryIndex() {
+  const map = new Map()
+  for (const w of await listWorkouts()) {
+    // listWorkouts — від нових до старих, тож перший запис = останній раз
+    for (const e of w.exercises) {
+      const cur = map.get(e.exerciseId)
+      if (cur) cur.count++
+      else map.set(e.exerciseId, { lastTs: w.startedAt, date: w.date, sets: e.sets, count: 1 })
+    }
+  }
+  return map
+}
+
 export async function countWorkoutsWithExercise(exerciseId) {
   return (await getDB()).countFromIndex('workouts', 'exerciseIds', exerciseId)
 }

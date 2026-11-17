@@ -81,6 +81,7 @@ src/
 - `page({ title, back, actions, headerExtra }, ...content)` — каркас екрана (`components/page.js`).
 - `createExerciseBrowser({ exercises, state, renderRow })` — пошук + фільтр груп + список вправ
   (бібліотека й вибір вправи в тренуванні). Пошук завжди по всій базі (фільтр скидається на «Усі»).
+  Чип «Мої» (`history` з `exerciseHistoryIndex()`) — виконані вправи, від останньої; типовий, якщо є історія.
 - `createWorkoutEditor({ workout, onChange, excludeId, before })` — редактор тренування
   (активне тренування й редагування збереженого). Мутує `workout`, показує минулий результат.
 - `openSheet({ title, content, full })` / `actionSheet(title, actions)` — нижні панелі (`components/sheet.js`).

@@ -2,14 +2,15 @@ import { h, svg } from '../lib/dom.js'
 import { icons } from './icons.js'
 import { iconButton, emptyState } from './page.js'
 import { openSheet, actionSheet } from './sheet.js'
-import { createExerciseBrowser, exerciseSubtitle } from './exercise-browser.js'
+import { createExerciseBrowser, exerciseSubtitle, historySubtitle } from './exercise-browser.js'
 import { listExercises } from '../db/exercises.js'
-import { getLastSession } from '../db/workouts.js'
+import { getLastSession, exerciseHistoryIndex } from '../db/workouts.js'
 import { navigate } from '../router.js'
 import { formatDateShort, setsSummary, toInputNum, parseNum } from '../lib/format.js'
 
 // Фільтр у виборі вправи зберігається між відкриттями (зручно в день «груди»)
-const pickerState = { group: 'all', query: '' }
+// group: null → «Мої», якщо вже є виконані вправи
+const pickerState = { group: null, query: '' }
 
 const hasData = (entry) => entry.sets.some((s) => s.reps != null || s.weight != null)
 
@@ -214,7 +215,8 @@ export function createWorkoutEditor({ workout, onChange, excludeId, before }) {
     const { controls, list } = createExerciseBrowser({
       exercises: [...exMap.values()],
       state: pickerState,
-      renderRow: (e) =>
+      history,
+      renderRow: (e, { mine }) =>
         h(
           'button',
           {
@@ -234,7 +236,7 @@ export function createWorkoutEditor({ workout, onChange, excludeId, before }) {
             'div',
             { class: 'row-main' },
             h('div', { class: 'row-title' }, e.name, added.has(e.id) && h('span', { class: 'badge' }, 'додано')),
-            h('div', { class: 'row-sub' }, exerciseSubtitle(e)),
+            h('div', { class: 'row-sub' }, mine && history.has(e.id) ? historySubtitle(history.get(e.id)) : exerciseSubtitle(e)),
           ),
           svg(icons.plus),
         ),
@@ -252,8 +254,12 @@ export function createWorkoutEditor({ workout, onChange, excludeId, before }) {
     )
   }
 
-  listExercises().then((all) => {
+  // Зведення по виконаних вправах — для фільтра «Мої» у виборі вправи
+  let history = new Map()
+
+  Promise.all([listExercises(), exerciseHistoryIndex()]).then(([all, hist]) => {
     for (const e of all) exMap.set(e.id, e)
+    history = hist
     render()
   })
   return root
