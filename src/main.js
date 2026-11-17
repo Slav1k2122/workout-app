@@ -7,6 +7,7 @@ import { h } from './lib/dom.js'
 import { route, fallback, startRouter, navigate } from './router.js'
 import { createTabbar } from './components/tabbar.js'
 import { requestPersistence } from './db/db.js'
+import { destroyCharts } from './lib/charts.js'
 
 import { workoutView } from './views/workout/index.js'
 import { exercisesView } from './views/exercises/index.js'
@@ -51,6 +52,7 @@ let currentPath = null
 startRouter((node, { path, isBack }) => {
   if (currentPath) scrollPositions.set(currentPath, window.scrollY)
   currentPath = path
+  destroyCharts()
   view.replaceChildren(node)
   tabbar.setActive(path)
   window.scrollTo(0, isBack ? (scrollPositions.get(path) ?? 0) : 0)

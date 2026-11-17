@@ -476,3 +476,40 @@ select.input {
 @keyframes fade-out { to { opacity: 0; } }
 @keyframes slide-up { from { transform: translateY(100%); } }
 @keyframes slide-down { to { transform: translateY(100%); } }
+
+/* ---------- Сегментований перемикач ---------- */
+.segmented {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+  background: var(--surface-2);
+}
+.segmented button {
+  flex: 1;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.segmented button.active { background: var(--border); color: var(--text); box-shadow: 0 1px 3px rgb(0 0 0 / 0.3); }
+.segmented.sm button { min-height: 30px; font-size: 13px; }
+.card .segmented { background: var(--bg); }
+.tab-content { margin-top: 14px; }
+
+/* ---------- Прогрес вправи ---------- */
+.stats-3 { grid-template-columns: repeat(3, 1fr); }
+.stats-2 { grid-template-columns: repeat(2, 1fr); }
+.stat-sub { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
+.chart-card { display: flex; flex-direction: column; gap: 12px; }
+.chart-headline { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-height: 30px; }
+.chart-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.chart-delta { font-size: 14px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.chart-box { position: relative; height: 220px; }
+.chart-empty { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-faint); font-size: 15px; }
+.chart-note { font-size: 13px; color: var(--text-faint); }
