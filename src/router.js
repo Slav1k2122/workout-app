@@ -46,15 +46,18 @@ export function goBack(fallbackPath) {
 
 let onChange = () => {}
 
-/** Перемальовує поточний екран (напр. після зміни даних без зміни шляху). */
-export function refresh() {
-  onChange()
+/**
+ * Перемальовує поточний екран (напр. після зміни даних без зміни шляху).
+ * refresh({ keepScroll: true }) — зберегти позицію прокрутки.
+ */
+export function refresh(opts = {}) {
+  onChange(opts)
 }
 
-/** Запускає роутер. render(node, { path, isBack }) викликається на кожну зміну маршруту. */
+/** Запускає роутер. render(node, { path, isBack, keepScroll }) викликається на кожну зміну маршруту. */
 export function startRouter(render) {
   let seq = 0
-  onChange = async () => {
+  onChange = async (opts = {}) => {
     const path = currentPath()
     const isBack = stack.length > 1 && stack[stack.length - 2] === path
     if (isBack) stack.pop()
@@ -71,8 +74,8 @@ export function startRouter(render) {
       }
     }
     if (!node && notFound) node = await notFound()
-    if (my === seq && node) render(node, { path, isBack })
+    if (my === seq && node) render(node, { path, isBack, keepScroll: !!opts.keepScroll })
   }
-  window.addEventListener('hashchange', onChange)
+  window.addEventListener('hashchange', () => onChange())
   onChange()
 }

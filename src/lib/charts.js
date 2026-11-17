@@ -1,7 +1,18 @@
 // Обгортка над Chart.js: лише потрібні модулі (tree-shaking) + оформлення під темну тему.
-import { Chart, LineController, LineElement, PointElement, LinearScale, Tooltip, Filler } from 'chart.js'
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  LinearScale,
+  Tooltip,
+  Filler,
+  BarController,
+  BarElement,
+  CategoryScale,
+} from 'chart.js'
 
-Chart.register(LineController, LineElement, PointElement, LinearScale, Tooltip, Filler)
+Chart.register(LineController, LineElement, PointElement, LinearScale, Tooltip, Filler, BarController, BarElement, CategoryScale)
 
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 
@@ -144,6 +155,116 @@ export function lineChart(canvas, { points, formatX, formatY, tooltip }) {
       },
     },
     plugins: [crosshair],
+  })
+  charts.add(chart)
+  return chart
+}
+
+/** Горизонтальна пунктирна лінія цілі (напр. норма калорій) з підписом. */
+const targetLine = {
+  id: 'targetLine',
+  afterDatasetsDraw(chart, _args, opts) {
+    if (!opts?.value) return
+    const y = chart.scales.y.getPixelForValue(opts.value)
+    const { left, right } = chart.chartArea
+    const { ctx } = chart
+    ctx.save()
+    ctx.strokeStyle = css('--text-dim')
+    ctx.lineWidth = 1
+    ctx.setLineDash([4, 4])
+    ctx.beginPath()
+    ctx.moveTo(left, y)
+    ctx.lineTo(right, y)
+    ctx.stroke()
+    if (opts.label) {
+      ctx.setLineDash([])
+      ctx.font = '500 11px ' + css('--font')
+      ctx.fillStyle = css('--text-dim')
+      ctx.textAlign = 'right'
+      ctx.textBaseline = 'bottom'
+      ctx.fillText(opts.label, right, y - 3)
+    }
+    ctx.restore()
+  },
+}
+
+/**
+ * Стовпчиковий графік по категоріях (напр. дні).
+ * @param labels     підписи осі X
+ * @param values     значення (0 — без стовпчика)
+ * @param target     значення лінії цілі (необов'язково) + targetLabel
+ * @param highlight  індекс виділеного стовпчика
+ * @param tooltip    { title(i), label(i), footer?(i) }
+ * @param onClick    (index) => void
+ */
+export function barChart(canvas, { labels, values, target, targetLabel, highlight, formatY, tooltip, onClick }) {
+  const accent = css('--accent')
+  const faint = css('--text-faint')
+  const chart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          data: values,
+          backgroundColor: values.map((_, i) => (i === highlight ? accent : 'rgba(52, 211, 153, 0.5)')),
+          hoverBackgroundColor: accent,
+          borderRadius: 4,
+          borderSkipped: 'start',
+          maxBarThickness: 24,
+          categoryPercentage: 0.82,
+          barPercentage: 0.92,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 250 },
+      interaction: { mode: 'index', intersect: false },
+      events: ['mousemove', 'mouseout', 'click', 'touchstart', 'touchmove'],
+      onClick: (_e, els) => {
+        if (els.length) onClick?.(els[0].index)
+      },
+      layout: { padding: { top: 14 } },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { color: css('--border') },
+          ticks: { color: faint, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+        },
+        y: {
+          beginAtZero: true,
+          suggestedMax: target ? target * 1.15 : undefined,
+          grid: { color: 'rgba(255, 255, 255, 0.06)' },
+          border: { display: false },
+          ticks: { color: faint, font: { size: 11 }, maxTicksLimit: 4, callback: (v) => formatY(v) },
+        },
+      },
+      plugins: {
+        legend: { display: false },
+        targetLine: { value: target, label: targetLabel },
+        tooltip: {
+          backgroundColor: css('--surface-2'),
+          borderColor: css('--border'),
+          borderWidth: 1,
+          titleColor: css('--text-dim'),
+          titleFont: { size: 12, weight: '500' },
+          bodyColor: css('--text'),
+          bodyFont: { size: 16, weight: '700' },
+          footerColor: css('--text-dim'),
+          footerFont: { size: 12, weight: '400' },
+          padding: 10,
+          displayColors: false,
+          callbacks: {
+            title: (items) => tooltip.title(items[0].dataIndex),
+            label: (item) => tooltip.label(item.dataIndex),
+            footer: (items) => tooltip.footer?.(items[0].dataIndex) ?? '',
+          },
+        },
+      },
+    },
+    plugins: [targetLine],
   })
   charts.add(chart)
   return chart

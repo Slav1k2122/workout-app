@@ -17,6 +17,7 @@ import { workoutDetailView } from './views/workout/detail.js'
 import { workoutEditView } from './views/workout/edit.js'
 import { getActiveWorkout } from './db/workouts.js'
 import { nutritionView } from './views/nutrition/index.js'
+import { nutritionProfileView } from './views/nutrition/profile.js'
 import { weightView } from './views/weight/index.js'
 import { moreView } from './views/more/index.js'
 
@@ -38,6 +39,7 @@ route('/exercises/new', () => exerciseFormView())
 route('/exercises/:id/edit', exerciseFormView)
 route('/exercises/:id', exerciseDetailView)
 route('/nutrition', nutritionView)
+route('/nutrition/profile', nutritionProfileView)
 route('/weight', weightView)
 route('/more', moreView)
 fallback(() => {
@@ -49,12 +51,13 @@ fallback(() => {
 const scrollPositions = new Map()
 let currentPath = null
 
-startRouter((node, { path, isBack }) => {
+startRouter((node, { path, isBack, keepScroll }) => {
+  const prevY = window.scrollY
   if (currentPath) scrollPositions.set(currentPath, window.scrollY)
   currentPath = path
   destroyCharts()
   view.replaceChildren(node)
   tabbar.setActive(path)
-  window.scrollTo(0, isBack ? (scrollPositions.get(path) ?? 0) : 0)
+  window.scrollTo(0, keepScroll ? prevY : isBack ? (scrollPositions.get(path) ?? 0) : 0)
   getActiveWorkout().then((active) => tabbar.setDot('/workout', !!active))
 })
