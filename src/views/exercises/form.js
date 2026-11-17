@@ -6,6 +6,7 @@ import { navigate, goBack } from '../../router.js'
 import { getExercise, listExercises, saveCustomExercise } from '../../db/exercises.js'
 import { GROUPS, MUSCLES, EQUIPMENT } from '../../data/muscles.js'
 import { normalize } from '../../components/exercise-browser.js'
+import { bodyMap } from '../../components/body-map.js'
 
 const lines = (text) =>
   text
@@ -85,12 +86,15 @@ export async function exerciseFormView({ id } = {}) {
     pickers[kind] = wrap
     return wrap
   }
+  // Живе прев'ю на силуеті
+  const preview = bodyMap()
   function refreshPickers() {
     for (const kind of ['primary', 'secondary']) {
       for (const chip of pickers[kind].children) {
         chip.classList.toggle(kind === 'primary' ? 'active' : 'active-soft', data[kind].has(chip.dataset.muscle))
       }
     }
+    preview.update({ primary: [...data.primary], secondary: [...data.secondary] })
   }
 
   const stepsInput = h('textarea', { class: 'input', rows: 5, value: (editing?.steps ?? []).join('\n') })
@@ -133,6 +137,7 @@ export async function exerciseFormView({ id } = {}) {
     { class: 'form', onsubmit: save },
     field('Назва', nameInput),
     h('div', { class: 'field-row' }, field('Група', groupSelect), field('Обладнання', equipmentSelect)),
+    h('div', { class: 'card' }, preview),
     h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Основні м’язи'), musclePicker('primary', 'secondary')),
     h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Допоміжні м’язи'), musclePicker('secondary', 'primary')),
     field('Кроки техніки', stepsInput, 'Кожен крок з нового рядка (необов’язково)'),

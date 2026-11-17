@@ -10,6 +10,7 @@ import { destroyCharts } from '../../lib/charts.js'
 import { plural } from '../../lib/format.js'
 import { GROUP_NAMES, MUSCLES, EQUIPMENT } from '../../data/muscles.js'
 import { loadSessions, progressView } from './progress.js'
+import { bodyMap } from '../../components/body-map.js'
 
 const back = { label: 'Вправи', href: '/exercises' }
 
@@ -25,11 +26,11 @@ function techniqueView(ex) {
       'div',
       { class: 'card' },
       h('h2', null, 'Задіяні м’язи'),
+      (ex.primary.length > 0 || ex.secondary.length > 0) && bodyMap({ primary: ex.primary, secondary: ex.secondary }),
       ex.primary.length
         ? [h('p', { class: 'label' }, 'Основні'), muscleChips(ex.primary, 'tag-primary')]
         : h('p', { class: 'muted small' }, 'Не вказано'),
       ex.secondary.length > 0 && [h('p', { class: 'label' }, 'Допоміжні'), muscleChips(ex.secondary, 'tag-secondary')],
-      h('p', { class: 'muted small', style: { marginTop: '12px' } }, 'Силует тіла з підсвіткою з’явиться на етапі 4.'),
     ),
     ex.steps.length > 0 &&
       h('div', { class: 'card' }, h('h2', null, 'Техніка'), h('ol', { class: 'steps' }, ex.steps.map((s) => h('li', null, s)))),
