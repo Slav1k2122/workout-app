@@ -23,8 +23,8 @@ src/
   main.js            # каркас, маршрути, реєстрація SW
   router.js          # хеш-роутер (#/path/:param); хеш, бо GitHub Pages і PWA
   styles/            # tokens.css (CSS-змінні), base.css, components.css
-  lib/               # dom.js (h, svg), далі: calc.js, dates.js, backup.js, charts.js
-  components/        # tabbar, page (заголовок + порожній стан), toast, icons, далі: BodyMap…
+  lib/               # dom.js (h, svg), format.js (дати/числа), calc.js, nutrition.js, backup.js, charts.js, uid.js
+  components/        # tabbar, page, toast, icons, sheet, segmented, ring, body-map, exercise-browser, workout-editor
   db/                # IndexedDB: db.js (схема/міграції) + модулі доступу на кожне сховище
   data/              # exercises.json (вбудовані вправи), muscles.js
   views/<розділ>/    # workout, exercises, nutrition, weight, more
@@ -37,18 +37,20 @@ src/
   Шрифт полів ≥ 16px (інакше iOS зумить). Враховувати safe-area (`--safe-top/bottom/left/right`).
 - Кожен екран — функція `xxxView(params)`, яка повертає DOM-вузол (може бути async).
 - Ніяких зовнішніх CDN під час роботи: усе в бандлі, щоб працювало офлайн.
-- Одиниці: кілограми. Крок ваги на степері 2.5 кг (гантелі 1 кг).
+- Одиниці: кілограми. Вага й повторення зараз — текстові поля; степер (крок 2.5 кг, гантелі 1 кг) заплановано в етапі 11.
 - Дати днів зберігаємо рядком `YYYY-MM-DD` у **локальному** часовому поясі (не через `toISOString()`).
 - Нові поля в даних додаємо через міграцію з підвищенням версії схеми IndexedDB і `schemaVersion` у бекапі.
 
 ## Модель даних (IndexedDB)
 | Сховище | Поля | Індекси |
 |---|---|---|
-| `exercises` | id, name, group, primary[], secondary[], equipment, steps[], mistakes[], custom | group |
-| `workouts` | id, date, startedAt, finishedAt, note, exercises: [{exerciseId, sets: [{reps, weight}]}], exerciseIds[] | date, exerciseIds (multiEntry) |
-| `meals` | id, date, time, name, kcal, protein?, fat?, carbs? | date |
-| `bodyWeight` | date (ключ), kg | — |
-| `meta` | profile, activeWorkout (чернетка), schemaVersion | — |
+| `exercises` | id, name, group, primary[], secondary[], equipment, steps[], mistakes[], custom, createdAt, updatedAt | group |
+| `workouts` | id, date, startedAt, finishedAt, note, exercises: [{exerciseId, name (знімок), sets: [{reps, weight}]}], exerciseIds[] | date, exerciseIds (multiEntry) |
+| `meals` | id, date, time, type, name, kcal, protein?, fat?, carbs?, createdAt | date |
+| `bodyWeight` | date (ключ), kg, updatedAt | — |
+| `meta` | `profile` {sex, age, height, weight, activity, goal, customKcal, updatedAt}, `activeWorkout` (чернетка), `lastBackupAt` (не експортується) | — |
+
+Версія схеми — `DB_VERSION` у `db/db.js` (зараз 1), у бекап пишеться як `schemaVersion`.
 
 - Вбудовані вправи лежать у `src/data/exercises.json` (у бандлі) зі стабільними id (`bench-press`),
   а в IndexedDB лише власні (`custom: true`). При показі списки об'єднуються.
@@ -77,6 +79,55 @@ src/
 - [x] 6. Вага тіла: записи, графік (тиждень/місяць/усе), зміна від початку
 - [x] 7. Експорт/імпорт JSON, storage.persist, шліфування
 - [ ] 8. (опц.) Таймер відпочинку між підходами — відкладено, не потрібен
+- [x] 9. Повне рев'ю (5 напрямів) + виправлення критичних пунктів 🔴1–6 (v1.0.1, коміт 188b23d)
+- [ ] 10. **Надійність даних та імпорту — НАСТУПНИЙ** (пункти рев'ю 7–13, нижче)
+- [ ] 11. Швидке введення в залі: ✓ «як минулого разу», степер, клавіатура в панелях, зони, контраст (14–19)
+- [ ] 12. Продуктивність і код: lazy Chart.js, ліміти вибірок історії, vitest + ESLint, розбити workout-editor (20–24)
+
+## Рев'ю (листопад 2026)
+Загалом стан добрий: чернетка зберігається на кожне натискання, завершення тренування / імпорт «замінити» /
+повне видалення — одна транзакція, офлайн і SW налаштовані правильно, поля ≥ 16px, `h()` без XSS.
+
+**Виправлено (етап 9, v1.0.1)** — перевірено в headless Edge через CDP (17 сценаріїв):
+1. Помилки не мовчать: екран помилки в роутері, `unhandledrejection` → toast.
+2. Втрачене з'єднання з IndexedDB на iOS: `terminated()` + `withRetry`; плашка, якщо чернетка не зберігається;
+   завершення пише чернетку з пам'яті. (Сам баг WebKit не відтворено — лише імітація; перевірити на iPhone.)
+3. Редагування збереженого тренування: без посилань на інші екрани, запит перед виходом зі змінами.
+4. Toast поверх нижніх панелей (раніше підказки валідації були невидимі).
+5. Видалення підходу: «Повернути» в toast, більша кнопка × і відступ.
+6. Захист від подвійного натискання (їжа, власна вправа, профіль, редагування, завершення).
+
+**Етап 10 — надійність даних (наступний):**
+- 7. «Об'єднати» не має переписувати наявний профіль, старіші записи (порівнювати `updatedAt`) і повертати
+  стару чернетку `activeWorkout` (краще не експортувати/не імпортувати її взагалі).
+- 8. Глибока перевірка бекапу: name/date/sets (через `cleanWorkout`), значення meta; заборонити «замінити»,
+  якщо у файлі 0 валідних записів; власна вправа з id вбудованої — відхиляти.
+- 9. Міграція старих бекапів: `migrateBackup(v→v+1)`, спільна з `upgrade()`; вимагати цілий `schemaVersion ≥ 1`.
+  Зробити ДО першої зміни схеми.
+- 10. Бекап позначається зробленим, навіть якщо файл не збережено (share після await, download у standalone).
+- 11. Вага ↔ профіль: після видалення/перенесення останнього запису оновлювати `profile.weight`; перенесення дати —
+  одна транзакція + запит, якщо дата зайнята; узгодити межі 20–400 (вага) і 30–300 (профіль).
+- 12. «Сьогодні» застаріває, якщо застосунок у пам'яті з ночі (Їжа, швидке додавання ваги) — перераховувати дату.
+- 13. Підходи з вагою, але без повторень мовчки відкидаються при завершенні — попереджати.
+
+**Етап 11 — UX у залі:** ✓ на підході (підказку минулого результату → у значення), степер ±2.5/±1,
+`visualViewport` (клавіатура закриває поля в панелях), зони < 48px (`.icon-btn`, «назад», чипи, перемикачі,
+`.set-input` 46px), `--text-faint` ≈ #8a8a9c (зараз ~3.1:1), закріплена «Додати прийом їжі», чип недавньої страви
+зберігає одразу, назва вправи в активному тренуванні — не посилання, `enterkeyhint="next"` у назві страви,
+порожній `touchstart` для `:active`, swipe-down / ручка для панелей.
+
+**Етап 12 — продуктивність і код:** Chart.js ≈ 60 з 98 кБ gzip бандла — винести через `import()`;
+`listWorkouts`/`exerciseHistoryIndex`/`recentMeals`/`getLastSession` читають усе сховище — курсор по `date` з лімітом
+і кеш; vitest для `lib/` + `parseBackup` + `cleanWorkout`, ESLint/Prettier, `npm test` у deploy.yml;
+розбити `workout-editor.js`; спільні хелпери форм/плиток/графіків.
+
+**Дрібниці (за нагоди):** відмінки «21 днів» у `nutrition/index.js` (→ `plural()`), `parseNum` обрізає «1 200» до 1,
+немає верхньої межі ваги/повторень, інтервал таймера може не зупинитись (реєстр очищення в роутері),
+«останній бекап: сьогодні» для вчорашнього вечора, плашку «Оновити» не можна закрити, splash-екрани iOS,
+`id` у manifest, `includeAssets` дублює precache, невикористаний prop `html` у `h()`, кольори графіків — у токени.
+
+**Ідеї функцій (пізніше):** підказка прогресії (+2.5 кг / +1 повтор), шаблони тренувань, особисті рекорди 🏆,
+тижнева карта навантаження м'язів (`bodyMap`), календар-теплокарта і серії.
 
 ## Корисні компоненти та нотатки
 - `page({ title, back, actions, headerExtra }, ...content)` — каркас екрана (`components/page.js`).
