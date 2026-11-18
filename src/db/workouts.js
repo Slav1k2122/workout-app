@@ -1,4 +1,4 @@
-import { getDB } from './db.js'
+import { getDB, withRetry } from './db.js'
 import { uid } from '../lib/uid.js'
 import { toISODate } from '../lib/format.js'
 
@@ -21,8 +21,9 @@ export async function getActiveWorkout() {
   return (await (await getDB()).get('meta', ACTIVE_KEY)) ?? null
 }
 
+/** Зберегти чернетку; при втраті з'єднання з базою (iOS) — перевідкрити й повторити. */
 export async function saveActiveWorkout(workout) {
-  await (await getDB()).put('meta', workout, ACTIVE_KEY)
+  await withRetry(async () => (await getDB()).put('meta', workout, ACTIVE_KEY))
 }
 
 export async function startWorkout() {
@@ -56,15 +57,20 @@ export function cleanWorkout(workout) {
   }
 }
 
-/** Зберігає чернетку як завершене тренування. Повертає збережений запис. */
-export async function finishActiveWorkout() {
-  const db = await getDB()
-  const active = await db.get('meta', ACTIVE_KEY)
-  if (!active) return null
-  const workout = cleanWorkout({ ...active, finishedAt: Date.now() })
-  const tx = db.transaction(['workouts', 'meta'], 'readwrite')
-  await Promise.all([tx.objectStore('workouts').put(workout), tx.objectStore('meta').delete(ACTIVE_KEY), tx.done])
-  return workout
+/**
+ * Зберігає чернетку як завершене тренування. Повертає збережений запис (або null, якщо чернетки немає).
+ * current — актуальна чернетка з пам'яті (надійніше, якщо останні автозбереження не вдалися).
+ */
+export async function finishActiveWorkout(current) {
+  return withRetry(async () => {
+    const db = await getDB()
+    const active = current ?? (await db.get('meta', ACTIVE_KEY))
+    if (!active) return null
+    const workout = cleanWorkout({ ...active, finishedAt: Date.now() })
+    const tx = db.transaction(['workouts', 'meta'], 'readwrite')
+    await Promise.all([tx.objectStore('workouts').put(workout), tx.objectStore('meta').delete(ACTIVE_KEY), tx.done])
+    return workout
+  })
 }
 
 // ---------- Збережені тренування ----------

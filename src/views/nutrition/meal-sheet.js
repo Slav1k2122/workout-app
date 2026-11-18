@@ -86,8 +86,10 @@ export async function openMealSheet({ meal, date, onSaved }) {
     )
 
   let close
+  let busy = false // захист від подвійного натискання (інакше два однакові записи)
   async function save(e) {
     e.preventDefault()
+    if (busy) return
     const name = nameInput.value.trim()
     const protein = parseNum(pInput.value)
     const fat = parseNum(fInput.value)
@@ -105,25 +107,37 @@ export async function openMealSheet({ meal, date, onSaved }) {
       toast('Вкажи калорії або БЖВ')
       return
     }
-    await saveMeal({
-      ...meal,
-      date: meal?.date ?? date,
-      time: timeInput.value || nowHHMM(),
-      type,
-      name,
-      kcal: Math.round(kcal),
-      protein,
-      fat,
-      carbs,
-    })
+    busy = true
+    try {
+      await saveMeal({
+        ...meal,
+        date: meal?.date ?? date,
+        time: timeInput.value || nowHHMM(),
+        type,
+        name,
+        kcal: Math.round(kcal),
+        protein,
+        fat,
+        carbs,
+      })
+    } catch (err) {
+      busy = false
+      throw err
+    }
     close()
     toast(editing ? 'Збережено' : 'Додано')
     onSaved?.()
   }
 
   async function remove() {
-    if (!confirm(`Видалити «${meal.name}»?`)) return
-    await deleteMeal(meal.id)
+    if (busy || !confirm(`Видалити «${meal.name}»?`)) return
+    busy = true
+    try {
+      await deleteMeal(meal.id)
+    } catch (err) {
+      busy = false
+      throw err
+    }
     close()
     toast('Видалено')
     onSaved?.()

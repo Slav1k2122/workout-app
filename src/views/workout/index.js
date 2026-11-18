@@ -95,7 +95,22 @@ function activeView(workout) {
     timer.textContent = formatClock(Date.now() - workout.startedAt)
   }, 1000)
 
-  const save = () => saveActiveWorkout(workout)
+  // Чернетка зберігається на кожну зміну. Якщо запис не вдався — постійне попередження,
+  // щоб не тренуватися далі з думкою, що все зберігається.
+  const saveWarning = h('div', { class: 'save-warning', role: 'alert', hidden: true }, '⚠️ Зміни не зберігаються на пристрої. Не закривай застосунок — спробую ще раз при наступній зміні.')
+  let saveSeq = 0
+  const save = () => {
+    const my = ++saveSeq
+    saveActiveWorkout(workout).then(
+      () => {
+        if (my === saveSeq) saveWarning.hidden = true
+      },
+      (err) => {
+        console.error(err)
+        if (my === saveSeq) saveWarning.hidden = false
+      },
+    )
+  }
   const editor = createWorkoutEditor({ workout, onChange: save })
 
   const note = h('textarea', {
@@ -116,6 +131,7 @@ function activeView(workout) {
     refresh()
   }
 
+  let finishing = false
   async function finish() {
     if (!hasFilledSets(workout)) {
       if (confirm('Немає жодного заповненого підходу. Скасувати тренування?')) {
@@ -125,8 +141,16 @@ function activeView(workout) {
       }
       return
     }
-    if (!confirm('Завершити й зберегти тренування?')) return
-    const saved = await finishActiveWorkout()
+    if (finishing || !confirm('Завершити й зберегти тренування?')) return
+    finishing = true
+    let saved
+    try {
+      saved = await finishActiveWorkout(workout)
+    } catch (err) {
+      finishing = false
+      throw err
+    }
+    if (!saved) return refresh() // чернетку вже прибрали (напр. імпортом)
     toast('Тренування збережено 💪')
     navigate('/workout/' + saved.id, { replace: true })
   }
@@ -144,6 +168,7 @@ function activeView(workout) {
         h('div', { class: 'workout-meta' }, svg(icons.clock), timer, h('span', { class: 'muted' }, '· почато о ' + formatTime(workout.startedAt))),
       ],
     },
+    saveWarning,
     editor,
     h('div', { class: 'field', style: { marginTop: '20px' } }, note),
     h('button', { class: 'btn btn-finish btn-block btn-lg', style: { marginTop: '16px' }, onclick: finish }, 'Завершити тренування'),

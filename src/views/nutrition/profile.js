@@ -102,20 +102,28 @@ export async function nutritionProfileView() {
     )
   }
 
+  let busy = false // захист від подвійного натискання (подвійний goBack)
   async function save() {
+    if (busy) return
     if (!isProfileValid(p)) {
       toast('Перевір вік (14–100), зріст (120–230) і вагу (30–300)')
       return
     }
-    await saveProfile({
-      sex: p.sex,
-      age: Math.round(p.age),
-      height: p.height,
-      weight: p.weight,
-      activity: p.activity,
-      goal: p.goal,
-      customKcal: p.customKcal > 0 ? Math.round(p.customKcal) : null,
-    })
+    busy = true
+    try {
+      await saveProfile({
+        sex: p.sex,
+        age: Math.round(p.age),
+        height: p.height,
+        weight: p.weight,
+        activity: p.activity,
+        goal: p.goal,
+        customKcal: p.customKcal > 0 ? Math.round(p.customKcal) : null,
+      })
+    } catch (err) {
+      busy = false
+      throw err
+    }
     toast('Норму збережено')
     goBack('/nutrition')
   }

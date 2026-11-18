@@ -3,7 +3,7 @@ import { page, emptyState } from '../../components/page.js'
 import { icons } from '../../components/icons.js'
 import { toast } from '../../components/toast.js'
 import { createWorkoutEditor } from '../../components/workout-editor.js'
-import { goBack } from '../../router.js'
+import { goBack, setLeaveGuard, clearLeaveGuard } from '../../router.js'
 import { getWorkout, saveWorkout, hasFilledSets } from '../../db/workouts.js'
 import { toISODate, parseISODate } from '../../lib/format.js'
 
@@ -45,12 +45,25 @@ export async function workoutEditView({ id }) {
     oninput: (e) => (workout.note = e.target.value),
   })
 
+  // Правки живуть лише в пам'яті — перед виходом без збереження питаємо
+  const initial = JSON.stringify(workout)
+  setLeaveGuard(() => JSON.stringify(workout) === initial || confirm('Вийти без збереження? Зміни буде втрачено.'))
+
+  let saving = false
   async function save() {
+    if (saving) return
     if (!hasFilledSets(workout)) {
       toast('Додай хоча б один підхід')
       return
     }
-    await saveWorkout(workout)
+    saving = true
+    try {
+      await saveWorkout(workout)
+    } catch (err) {
+      saving = false
+      throw err
+    }
+    clearLeaveGuard()
     toast('Зміни збережено')
     goBack('/workout/' + id)
   }

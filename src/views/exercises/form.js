@@ -100,29 +100,39 @@ export async function exerciseFormView({ id } = {}) {
   const stepsInput = h('textarea', { class: 'input', rows: 5, value: (editing?.steps ?? []).join('\n') })
   const mistakesInput = h('textarea', { class: 'input', rows: 3, value: (editing?.mistakes ?? []).join('\n') })
 
+  let busy = false // захист від подвійного натискання (дві однакові вправи)
   async function save(e) {
     e.preventDefault()
+    if (busy) return
     const name = nameInput.value.trim()
     if (!name) {
       toast('Вкажи назву вправи')
       nameInput.focus()
       return
     }
-    const all = await listExercises()
-    if (all.some((x) => x.id !== editing?.id && normalize(x.name) === normalize(name))) {
-      toast('Вправа з такою назвою вже є')
-      return
+    busy = true
+    let saved
+    try {
+      const all = await listExercises()
+      if (all.some((x) => x.id !== editing?.id && normalize(x.name) === normalize(name))) {
+        busy = false
+        toast('Вправа з такою назвою вже є')
+        return
+      }
+      saved = await saveCustomExercise({
+        ...editing,
+        name,
+        group: data.group,
+        equipment: data.equipment,
+        primary: [...data.primary],
+        secondary: [...data.secondary],
+        steps: lines(stepsInput.value),
+        mistakes: lines(mistakesInput.value),
+      })
+    } catch (err) {
+      busy = false
+      throw err
     }
-    const saved = await saveCustomExercise({
-      ...editing,
-      name,
-      group: data.group,
-      equipment: data.equipment,
-      primary: [...data.primary],
-      secondary: [...data.secondary],
-      steps: lines(stepsInput.value),
-      mistakes: lines(mistakesInput.value),
-    })
     if (editing) {
       toast('Зміни збережено')
       goBack('/exercises/' + encodeURIComponent(saved.id)) // повертаємось на картку (вона перечитає дані)

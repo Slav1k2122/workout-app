@@ -30,8 +30,40 @@ export function getDB() {
       dbPromise?.then((db) => db.close())
       location.reload()
     },
+    terminated() {
+      // iOS іноді обриває з'єднання, коли застосунок довго у фоні, — наступний виклик відкриє нове
+      dbPromise = null
+    },
+  }).catch((err) => {
+    dbPromise = null
+    throw err
   })
   return dbPromise
+}
+
+/** Скинути кешоване з'єднання (після помилки, схожої на втрачене з'єднання). */
+export function resetDB() {
+  dbPromise = null
+}
+
+/** Помилка схожа на «мертве» з'єднання з IndexedDB (відомий баг WebKit). */
+export function isConnectionError(err) {
+  return (
+    err?.name === 'InvalidStateError' ||
+    err?.name === 'UnknownError' ||
+    /connection.*lost/i.test(err?.message ?? '')
+  )
+}
+
+/** Виконати операцію з базою; якщо з'єднання втрачено — перевідкрити й повторити один раз. */
+export async function withRetry(fn) {
+  try {
+    return await fn()
+  } catch (err) {
+    if (!isConnectionError(err)) throw err
+    resetDB()
+    return fn()
+  }
 }
 
 /** Просить браузер не видаляти дані автоматично (особливо важливо для iOS). */

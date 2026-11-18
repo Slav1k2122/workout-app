@@ -6,6 +6,7 @@ import { createExerciseBrowser, exerciseSubtitle, historySubtitle } from './exer
 import { listExercises } from '../db/exercises.js'
 import { getLastSession, exerciseHistoryIndex } from '../db/workouts.js'
 import { navigate } from '../router.js'
+import { toast } from './toast.js'
 import { formatDateShort, setsSummary, toInputNum, parseNum } from '../lib/format.js'
 
 // Фільтр у виборі вправи зберігається між відкриттями (зручно в день «груди»)
@@ -22,8 +23,12 @@ const hasData = (entry) => entry.sets.some((s) => s.reps != null || s.weight != 
  * @param onChange   (workout) => void
  * @param excludeId  id тренування, яке не враховувати при пошуку минулого результату
  * @param before     шукати минулий результат лише серед тренувань, що почались раніше (timestamp)
+ *
+ * Без onChange (редагування збереженого) зміни живуть лише в пам'яті, тому переходів
+ * на інші екрани (назва вправи, «Техніка та статистика») немає — щоб не загубити правки.
  */
 export function createWorkoutEditor({ workout, onChange, excludeId, before }) {
+  const canLeave = !!onChange
   const root = h('div', { class: 'editor' })
   const exMap = new Map()
   const lastResolved = new Map() // exerciseId → { date, sets } | null
@@ -101,8 +106,19 @@ export function createWorkoutEditor({ workout, onChange, excludeId, before }) {
           class: 'set-del',
           'aria-label': `Видалити підхід ${i + 1}`,
           onclick: () => {
-            entry.sets.splice(i, 1)
+            const [removed] = entry.sets.splice(i, 1)
             changed(true)
+            const filled = removed.reps != null || removed.weight != null
+            toast(filled ? `Підхід ${i + 1} видалено` : 'Підхід видалено', {
+              action: {
+                label: 'Повернути',
+                onClick: () => {
+                  if (!workout.exercises.includes(entry)) return // вправу вже прибрали
+                  entry.sets.splice(Math.min(i, entry.sets.length), 0, removed)
+                  changed(true)
+                },
+              },
+            })
           },
         },
         svg(icons.close),
@@ -114,7 +130,6 @@ export function createWorkoutEditor({ workout, onChange, excludeId, before }) {
   function exerciseCard(entry, idx) {
     const id = entry.exerciseId
     const name = exMap.get(id)?.name ?? entry.name ?? 'Вправа'
-    const href = '#/exercises/' + encodeURIComponent(id)
 
     const setsEl = h('div', { class: 'sets' })
     const renderSets = () => {
@@ -184,7 +199,7 @@ export function createWorkoutEditor({ workout, onChange, excludeId, before }) {
         actionSheet(name, [
           { label: 'Перемістити вище', disabled: idx === 0, onClick: () => move(idx, -1) },
           { label: 'Перемістити нижче', disabled: idx === workout.exercises.length - 1, onClick: () => move(idx, 1) },
-          { label: 'Техніка та статистика', onClick: () => navigate('/exercises/' + encodeURIComponent(id)) },
+          canLeave && { label: 'Техніка та статистика', onClick: () => navigate('/exercises/' + encodeURIComponent(id)) },
           {
             label: 'Прибрати з тренування',
             danger: true,
@@ -194,13 +209,20 @@ export function createWorkoutEditor({ workout, onChange, excludeId, before }) {
               changed(true)
             },
           },
-        ]),
+        ].filter(Boolean)),
     })
 
     return h(
       'div',
       { class: 'card exercise-card' },
-      h('div', { class: 'exercise-card-head' }, h('a', { class: 'exercise-name', href }, name), menu),
+      h(
+        'div',
+        { class: 'exercise-card-head' },
+        canLeave
+          ? h('a', { class: 'exercise-name', href: '#/exercises/' + encodeURIComponent(id) }, name)
+          : h('span', { class: 'exercise-name' }, name),
+        menu,
+      ),
       lastEl,
       setsEl,
       addSet,
